@@ -1,0 +1,119 @@
+static_resources:
+  listeners:
+    - name: listener_0
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 8080
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: ingress_http
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: backend
+                      domains: ["*"]
+                      routes:
+                        - match: { prefix: "/user" }
+                          route: { cluster: user_service }
+
+                        - match: { prefix: "/orders" }
+                          route: { cluster: orders_service }
+
+                        - match: { prefix: "/admin" }
+                          route: { cluster: admin_service }
+
+                http_filters:
+                  - name: envoy.filters.http.jwt_authn
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+                      providers:
+                        auth0:
+                          issuer: "https://your-auth-domain/"
+                          audiences:
+                            - "your-audience"
+                          remote_jwks:
+                            http_uri:
+                              uri: "https://your-auth-domain/.well-known/jwks.json"
+                              cluster: auth_cluster
+                              timeout: 5s
+                          forward: true
+                      rules:
+                        - match: { prefix: "/" }
+                          requires:
+                            provider_name: auth0
+
+                  - name: envoy.filters.http.ext_authz
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
+                      grpc_service:
+                        google_grpc:
+                          target_uri: "opa:8181"
+                          stat_prefix: ext_authz
+                        timeout: 0.5s
+
+                  - name: envoy.filters.http.router
+
+  clusters:
+    - name: user_service
+      connect_timeout: 1s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: user_service
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: user_service
+                      port_value: 8000
+
+    - name: orders_service
+      connect_timeout: 1s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: orders_service
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: orders_service
+                      port_value: 8000
+
+    - name: admin_service
+      connect_timeout: 1s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: admin_service
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: admin_service
+                      port_value: 8000
+
+    - name: auth_cluster
+      connect_timeout: 5s
+      type: LOGICAL_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: auth_cluster
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: your-auth-domain
+                      port_value: 443
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext

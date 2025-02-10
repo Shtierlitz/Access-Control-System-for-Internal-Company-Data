@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  user_service:
+    build: ./user_service
+    ports:
+      - "8001:8000"
+    environment:
+      - ENV=production
+
+  orders_service:
+    build: ./orders_service
+    ports:
+      - "8002:8000"
+    environment:
+      - ENV=production
+
+  admin_service:
+    build: ./admin_service
+    ports:
+      - "8003:8000"
+    environment:
+      - ENV=production
+
+  envoy:
+    image: envoyproxy/envoy:v1.26.0
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml
+    ports:
+      - "8080:8080" # main API Gateway port
+      - "9901:9901" # Admin API Envoy
+
+  opa:
+    image: openpolicyagent/opa:latest
+    ports:
+      - "8181:8181"
+    command:
+      - "run"
+      - "--server"
+      - "--log-level=debug"
