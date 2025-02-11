@@ -1,26 +1,42 @@
+from datetime import timedelta
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from utils import verify_password
-from database import get_db
 from crud import create_user, get_users, get_user_by_id, get_user_by_email
-from schemas import UserCreate, UserOut
+from database import get_db
+from models import User
+from schemas import UserCreate, UserOut, LoginSchema
+from security import create_access_token, verify_password, get_password_hash
 
 router = APIRouter()
 
-@router.post("/login/")
-def login(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = get_user_by_email(db, str(user.email))
-    if not db_user or not verify_password(user.password, db_user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-    return {"message": "Login successful"}
+
+@router.post("/login")
+def login(data: LoginSchema, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == data.user_email).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="User not found")
+
+    if not verify_password(data.password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect password")
+
+    token = create_access_token({"sub": user.email, "role": user.role}, timedelta(minutes=30))
+    return {"access_token": token, "token_type": "bearer"}
+
 
 @router.post("/users/", response_model=UserOut)
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
     db_user = get_user_by_email(db, str(user.email))
     if db_user:
         raise HTTPException(status_code=400, detail="Email уже зарегистрирован")
+
+    hashed_password = get_password_hash(user.password)
+    user.password = hashed_password
+
     return create_user(db, user)
 
 
