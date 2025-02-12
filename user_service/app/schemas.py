@@ -21,3 +21,8 @@ class UserOut(UserBase):
 class LoginSchema(BaseModel):
     user_email: str
     password: str
+
+
+class TokenData(BaseModel):
+    email: str
+    role: str
