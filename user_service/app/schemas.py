@@ -1,6 +1,11 @@
 from pydantic import BaseModel, EmailStr
 
 
+class LoginSchema(BaseModel):
+    user_email: EmailStr
+    password: str
+
+
 class UserBase(BaseModel):
     username: str
     email: EmailStr
@@ -18,11 +23,6 @@ class UserOut(UserBase):
         from_attributes = True
 
 
-class LoginSchema(BaseModel):
-    user_email: str
-    password: str
-
-
-class TokenData(BaseModel):
-    email: str
-    role: str
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str

@@ -5,12 +5,12 @@ from alembic import context
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-from app.models import User
+from app.models import User, Order
 from app.database import Base
 
 load_dotenv()
 
-SCHEMA = os.getenv("DB_SCHEMA", "user_service")
+SCHEMA = os.getenv("DB_SCHEMA", "db_service")
 
 config = context.config
 
