@@ -170,3 +170,5 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 commands.txt
+algoritms_conspect.txt
+slides.py
