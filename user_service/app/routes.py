@@ -1,10 +1,12 @@
+# user_service/app/routes.py
+
 from datetime import timedelta
 import requests
 from fastapi import APIRouter, Depends, HTTPException
 from app.security import create_access_token, verify_password, get_password_hash, get_current_user, get_current_admin
 from app.schemas import LoginSchema, UserCreate, UserOut, TokenResponse
 
-DB_SERVICE_URL = "http://db_service:8000"
+DB_SERVICE_URL = "http://localhost:8000"
 
 router = APIRouter()
 

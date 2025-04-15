@@ -14,7 +14,7 @@ SECRET_KEY = os.getenv('USER_SERVICE_JWT_SECRET', 'default_secret')
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-DB_SERVICE_URL = "http://db_service:8000"
+DB_SERVICE_URL = os.getenv("DB_SERVICE_URL")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 bearer_scheme = HTTPBearer()

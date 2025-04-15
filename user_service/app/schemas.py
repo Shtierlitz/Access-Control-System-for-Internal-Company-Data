@@ -1,3 +1,5 @@
+# user_service/app/schemas.py
+
 from pydantic import BaseModel, EmailStr
 
 

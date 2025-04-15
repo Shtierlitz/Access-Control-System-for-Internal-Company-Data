@@ -1,0 +1,26 @@
+init-envs:
+	@if [ ! -f db_service/.env ]; then cp db_service/.env.template db_service/.env; fi
+	@if [ ! -f user_service/.env ]; then cp user_service/.env.template user_service/.env; fi
+
+
+up:
+	docker-compose up --build -d
+
+down:
+	docker-compose down
+
+restart:
+	docker-compose restart
+
+rebuild: down init-envs
+	docker-compose build --no-cache
+	docker-compose up -d
+
+logs:
+	docker-compose logs -f
+
+ps:
+	docker-compose ps
+
+freeze:
+	pip freeze > requirements.txt

@@ -128,7 +128,8 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+*.env
+!*.env.template
 .venv
 env/
 venv/
@@ -172,3 +173,5 @@ cython_debug/
 commands.txt
 algoritms_conspect.txt
 slides.py
+*.iml
+*.xml

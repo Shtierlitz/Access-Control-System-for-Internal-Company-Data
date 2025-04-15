@@ -1,40 +1,38 @@
-version: "3.8"
+# =============================
+# 📦 docker-compose.yml
+# =============================
 
 services:
+  db_service:
+    build:
+      context: .
+      dockerfile: db_service/Dockerfile
+    env_file:
+      - ./db_service/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres_db
+
   user_service:
-    build: ./user_service
+    build:
+      context: .
+      dockerfile: user_service/Dockerfile
+    env_file:
+      - ./user_service/.env
     ports:
-      - "8001:8000"
-    environment:
-      - ENV=production
+      - "8002:8002"
+    depends_on:
+      - db_service
 
-  orders_service:
-    build: ./orders_service
+  postgres_db:
+    image: postgres:14
+    env_file:
+      - .env.postgres
     ports:
-      - "8002:8000"
-    environment:
-      - ENV=production
-
-  admin_service:
-    build: ./admin_service
-    ports:
-      - "8003:8000"
-    environment:
-      - ENV=production
-
-  envoy:
-    image: envoyproxy/envoy:v1.26.0
+      - "5433:5432"  # 5433 наружу, 5432 внутри
     volumes:
-      - ./envoy.yaml:/etc/envoy/envoy.yaml
-    ports:
-      - "8080:8080" # main API Gateway port
-      - "9901:9901" # Admin API Envoy
+      - postgres_data:/var/lib/postgresql/data
 
-  opa:
-    image: openpolicyagent/opa:latest
-    ports:
-      - "8181:8181"
-    command:
-      - "run"
-      - "--server"
-      - "--log-level=debug"
+volumes:
+  postgres_data:
