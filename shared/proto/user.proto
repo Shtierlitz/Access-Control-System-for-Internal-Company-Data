@@ -1,0 +1,41 @@
+// shared/proto/user.proto
+syntax = "proto3";
+
+package user;
+
+message Empty {}
+
+service UserService {
+  rpc GetUserByEmail(GetUserByEmailRequest) returns (UserResponse);
+  rpc GetUserById(UserIdRequest) returns (UserResponse);
+  rpc CreateUser(UserCreateRequest) returns (UserResponse);
+  rpc ListUsers(Empty) returns (UserListResponse);
+}
+
+message GetUserByEmailRequest {
+  string email = 1;
+}
+
+message UserIdRequest {
+  int32 id = 1;
+}
+
+message UserCreateRequest {
+  string username = 1;
+  string email = 2;
+  string hashed_password = 3;
+  string role = 4;
+}
+
+message UserResponse {
+  int32 id = 1;
+  string email = 2;
+  string username = 3;
+  string role = 4;
+  string hashed_password = 5;
+}
+
+message UserListResponse {
+  repeated UserResponse users = 1;
+}
+

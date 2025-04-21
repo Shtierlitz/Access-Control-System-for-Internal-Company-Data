@@ -1,6 +1,8 @@
 init-envs:
 	@if [ ! -f db_service/.env ]; then cp db_service/.env.template db_service/.env; fi
 	@if [ ! -f user_service/.env ]; then cp user_service/.env.template user_service/.env; fi
+	@if [ ! -f orders_service/.env ]; then cp orders_service/.env.template orders_service/.env; fi
+	@if [ ! -f admin_service/.env ]; then cp admin_service/.env.template admin_service/.env; fi
 
 
 up:
@@ -23,4 +25,14 @@ ps:
 	docker-compose ps
 
 freeze:
-	pip freeze > requirements.txt
+	.venv/bin/pip freeze > requirements.txt
+
+proto:
+	@echo "🔄 Generating gRPC code from .proto files..."
+	@mkdir -p shared/generated
+	@touch shared/generated/__init__.py
+	.venv/bin/python -m grpc_tools.protoc \
+		-I shared/proto \
+		--python_out=shared/generated \
+		--grpc_python_out=shared/generated \
+		shared/proto/user.proto shared/proto/orders.proto

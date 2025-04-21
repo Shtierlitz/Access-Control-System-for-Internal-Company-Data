@@ -1,12 +1,15 @@
 # user_service/app/security.py
 import os
 from datetime import datetime, timedelta
+
+import grpc
 import requests
 import jwt
 from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status, Security
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer
 from passlib.context import CryptContext
+from app.grpc_client import get_user_by_email
 
 load_dotenv()
 
@@ -50,12 +53,18 @@ def get_current_user(token: str = Depends(bearer_scheme)):
     credentials = token.credentials
     token_data = decode_access_token(credentials)
 
-    response = requests.get(f"{DB_SERVICE_URL}/users/email/{token_data['email']}")
-    if response.status_code == 404:
+    try:
+        user = get_user_by_email(token_data["email"])
+    except grpc.RpcError:
         raise HTTPException(status_code=401, detail="User not found")
 
-    user = response.json()
-    return user
+    return {
+        "id": user.id,
+        "email": user.email,
+        "username": user.username,
+        "role": user.role,
+        "hashed_password": user.hashed_password
+    }
 
 
 def get_current_admin(current_user: dict = Security(get_current_user)):

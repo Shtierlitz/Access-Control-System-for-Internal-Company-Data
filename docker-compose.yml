@@ -25,6 +25,27 @@ services:
     depends_on:
       - db_service
 
+  orders_service:
+    build:
+      context: .
+      dockerfile: orders_service/Dockerfile
+    env_file:
+      - ./orders_service/.env
+    ports:
+      - "8003:8003"
+    depends_on:
+      - db_service
+
+  admin_service:
+    build:
+      context: .
+      dockerfile: admin_service/Dockerfile
+    ports:
+      - "8004:8004"
+    depends_on:
+      - db_service
+      - orders_service
+
   postgres_db:
     image: postgres:14
     env_file:
@@ -34,5 +55,25 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  envoy:
+    image: envoyproxy/envoy:v1.26-latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml
+    depends_on:
+      - opa
+      - user_service
+      - orders_service
+      - admin_service
+
+  opa:
+    image: openpolicyagent/opa:0.57.0
+    platform: linux/amd64
+    command: ["run", "--server", "--log-level", "debug", "/policies/policy.rego"]
+    volumes:
+      - ./envoy/policies:/policies
+    ports:
+      - "8181:8181"
 volumes:
   postgres_data:

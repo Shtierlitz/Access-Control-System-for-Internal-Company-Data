@@ -1,4 +1,13 @@
-FROM ubuntu:latest
-LABEL authors="i.davydovskyi"
+FROM python:3.12-slim
 
-ENTRYPOINT ["top", "-b"]
+WORKDIR /app
+
+COPY ./admin_service/app /app/app
+COPY ./requirements.txt /app/requirements.txt
+COPY ./shared /app/shared
+
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+ENV PYTHONPATH=/app
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8004"]
