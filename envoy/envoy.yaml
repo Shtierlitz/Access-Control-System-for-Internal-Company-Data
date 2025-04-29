@@ -15,24 +15,69 @@ static_resources:
                     - name: backend
                       domains: ["*"]
                       routes:
-                        - match: { prefix: "/users" }
-                          route: { cluster: user_service }
-
-                        - match: { prefix: "/orders" }
-                          route: { cluster: orders_service }
-
-                        - match: { prefix: "/admin" }
-                          route: { cluster: admin_service }
-
-                        # Swagger UI routes
-                        - match: { prefix: "/login" }
+                        # USERS Service
+                        - match:
+                            safe_regex:
+                              regex: "^/users/?$"
                           route:
                             cluster: user_service
+                            prefix_rewrite: "/users/"
+
+                        - match: { prefix: "/users/" }
+                          route:
+                            cluster: user_service
+
+                        # ORDERS Service
+                        - match:
+                            safe_regex:
+                              regex: "^/orders/?$"
+                          route:
+                            cluster: orders_service
+                            prefix_rewrite: "/orders/"
+
+                        - match: { prefix: "/orders/" }
+                          route:
+                            cluster: orders_service
+
+                        # ADMIN Service
+                        - match:
+                            safe_regex:
+                              regex: "^/admin/?$"
+                          route:
+                            cluster: admin_service
+                            prefix_rewrite: "/admin/"
+
+                        - match:
+                            safe_regex:
+                              regex: "^/admin/users/?$"
+                          route:
+                            cluster: admin_service
+                            prefix_rewrite: "/admin/users/"
+
+                        - match:
+                            safe_regex:
+                              regex: "^/admin/orders/?$"
+                          route:
+                            cluster: admin_service
+                            prefix_rewrite: "/admin/orders/"
+
+                        - match: { prefix: "/admin/" }
+                          route:
+                            cluster: admin_service
+
+                        # LOGIN route (Auth bypass)
+                        - match:
+                            safe_regex:
+                              regex: "^/login/?$"
+                          route:
+                            cluster: user_service
+                            prefix_rewrite: "/users/login"
                           typed_per_filter_config:
                             envoy.ext_authz:
                               "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthzPerRoute
                               disabled: true
 
+                        # DOCS (Swagger UI)
                         - match: { prefix: "/docs" }
                           route:
                             cluster: user_service
@@ -47,7 +92,6 @@ static_resources:
                           route:
                             cluster: admin_service
                             prefix_rewrite: "/docs"
-
                 http_filters:
                   - name: envoy.filters.http.ext_authz
                     typed_config:
@@ -57,16 +101,21 @@ static_resources:
                           uri: http://opa:8181
                           cluster: opa
                           timeout: 1s
+                        path_prefix: "/v1/data/envoy/authz/allow"
                         authorization_request:
                           allowed_headers:
                             patterns:
                               - exact: authorization
-                        path_prefix: "/v1/data/envoy/authz"
+                          headers_to_add:
+                            - key: "Content-Type"
+                              value: "application/json"
+                        authorization_response:
+                          allowed_upstream_headers:
+                            patterns:
+                              - exact: authorization
                   - name: envoy.filters.http.router
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
-
-
   clusters:
     - name: user_service
       connect_timeout: 0.25s

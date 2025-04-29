@@ -1,6 +1,10 @@
-from fastapi import APIRouter, Depends, Security
+from fastapi import APIRouter, Security
 from app.dependencies import get_current_user
-from app.grpc_client import create_order_grpc, get_orders_for_user, get_all_orders_grpc
+from app.grpc_client import (
+    create_order_grpc,
+    get_orders_for_user,
+    get_all_orders_grpc,
+)
 from app.schemas import OrderCreate, OrderOut
 
 router = APIRouter()

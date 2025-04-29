@@ -175,3 +175,5 @@ algoritms_conspect.txt
 slides.py
 *.iml
 *.xml
+.env.postgres
+*logfile

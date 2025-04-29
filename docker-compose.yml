@@ -70,7 +70,7 @@ services:
   opa:
     image: openpolicyagent/opa:0.57.0
     platform: linux/amd64
-    command: ["run", "--server", "--log-level", "debug", "/policies/policy.rego"]
+    command: [ "run", "--server", "--set=default_decision=response", "--log-level=debug", "/policies/policy.rego" ]
     volumes:
       - ./envoy/policies:/policies
     ports:

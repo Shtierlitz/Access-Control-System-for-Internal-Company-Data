@@ -19,4 +19,11 @@ def list_users():
 
 def get_user_by_id(user_id: int):
     request = user_pb2.UserIdRequest(id=user_id)
-    return stub.GetUserById(request)
+    response = stub.GetUserById(request)
+
+    return {
+        "id": response.id,
+        "email": response.email,
+        "username": response.username,
+        "role": response.role,
+    }

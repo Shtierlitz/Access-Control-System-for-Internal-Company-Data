@@ -27,6 +27,11 @@ ps:
 freeze:
 	.venv/bin/pip freeze > requirements.txt
 
+reset:
+	docker-compose down -v --remove-orphans
+	docker-compose build --no-cache
+	docker-compose up -d
+
 proto:
 	@echo "🔄 Generating gRPC code from .proto files..."
 	@mkdir -p shared/generated

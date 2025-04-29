@@ -1,25 +1,29 @@
 # db_service/app/database.py
 import os
+import time
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 load_dotenv()
+Base = declarative_base()
 
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME", "api_gateway_db")
-
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-
-engine = create_engine(DATABASE_URL)
+MAX_RETRIES = 10
+for i in range(MAX_RETRIES):
+    try:
+        engine = create_engine(os.getenv("DATABASE_URL", ""))
+        Base.metadata.create_all(bind=engine)
+        print("✅ Connected to the database!")
+        break
+    except OperationalError as e:
+        print(f"⏳ Waiting for database... ({i + 1}/{MAX_RETRIES})")
+        time.sleep(3)
+else:
+    raise RuntimeError("❌ Could not connect to the database after several attempts.")
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
 
 
 def get_db():
@@ -28,5 +32,6 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 Base.metadata.create_all(bind=engine)

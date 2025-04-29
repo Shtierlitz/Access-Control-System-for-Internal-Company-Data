@@ -3,7 +3,11 @@ from fastapi import APIRouter, HTTPException
 from app.grpc_clients.user import list_users, get_user_by_id
 from app.grpc_clients.orders import get_all_orders, get_orders_by_user
 
-router = APIRouter()
+router = APIRouter(prefix="/admin")
+
+@router.get("/")
+def admin_root():
+    return {"status": "Admin service is running"}
 
 @router.get("/users/")
 def get_users():

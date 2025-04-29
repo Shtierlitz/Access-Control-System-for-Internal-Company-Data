@@ -1,34 +1,51 @@
-package envoy.authz
+package envoy.authz.allow
 
 default allow = false
 
-# login — доступен всем
+# Login без авторизации
 allow {
-  startswith(input.request.http.path, "/login")
+  endswith(input.request.http.path, "/login")
 }
 
-# users — доступ с любой ролью
+# Users (любой путь внутри users)
 allow {
-  token := input.request.http.headers.authorization
-  [_, payload, _] := io.jwt.decode(token)
-  role := payload["role"]
-  startswith(input.request.http.path, "/users")
+  input.request.http.method == "GET"
+  regex.match("^/users(/.*)?$", input.request.http.path)
+  payload := decode_jwt(input.request.http.headers.authorization)
+  payload.role == "USER"
 }
 
-# orders — только USER
+# Orders (любой путь внутри orders)
 allow {
-  token := input.request.http.headers.authorization
-  [_, payload, _] := io.jwt.decode(token)
-  role := payload["role"]
-  startswith(input.request.http.path, "/orders")
-  role == "USER"
+  input.request.http.method == "GET"
+  regex.match("^/orders(/.*)?$", input.request.http.path)
+  payload := decode_jwt(input.request.http.headers.authorization)
+  payload.role == "USER"
 }
 
-# admin — только ADMIN
+# Admin (любой путь внутри admin)
 allow {
-  token := input.request.http.headers.authorization
+  input.request.http.method == "GET"
+  regex.match("^/admin(/.*)?$", input.request.http.path)
+  payload := decode_jwt(input.request.http.headers.authorization)
+  payload.role == "ADMIN"
+}
+
+decode_jwt(token) = payload {
   [_, payload, _] := io.jwt.decode(token)
-  role := payload["role"]
-  startswith(input.request.http.path, "/admin")
-  role == "ADMIN"
+} else = {}
+
+default response = {
+  "allowed": false,
+  "status_code": 403,
+  "headers": {"content-type": "application/json"},
+  "body": "{\"reason\": \"Forbidden\"}"
+}
+
+response = {
+  "allowed": true,
+  "status_code": 200,
+  "headers": {"content-type": "application/json"}
+} {
+  allow
 }

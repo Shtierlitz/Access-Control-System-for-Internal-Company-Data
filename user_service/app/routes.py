@@ -2,12 +2,36 @@ from datetime import timedelta
 from typing import cast
 
 import grpc
-from fastapi import APIRouter, Depends, HTTPException
-from app.security import create_access_token, verify_password, get_password_hash, get_current_user, get_current_admin
-from app.schemas import LoginSchema, UserCreate, UserOut, TokenResponse
-from app.grpc_client import get_user_by_email, get_user_by_id, create_user, list_users
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Header,
+)
+from app.security import (
+    create_access_token,
+    verify_password,
+    get_password_hash,
+    get_current_user,
+    get_current_admin,
+    decode_access_token,
+)
+from app.schemas import (
+    LoginSchema,
+    UserCreate,
+    UserOut,
+    TokenResponse,
+)
+from app.grpc_client import (
+    get_user_by_email,
+    get_user_by_id,
+    create_user,
+    list_users,
+)
 from grpc import RpcError, StatusCode
-router = APIRouter()
+
+
+router = APIRouter(prefix="/users")
 
 @router.post("/login", response_model=TokenResponse)
 def login(data: LoginSchema):
@@ -23,7 +47,7 @@ def login(data: LoginSchema):
     return {"access_token": token, "token_type": "bearer"}
 
 
-@router.post("/users/", response_model=UserOut)
+@router.post("/", response_model=UserOut)
 def register_user(user: UserCreate):
     try:
         _ = get_user_by_email(user.email)
@@ -36,17 +60,17 @@ def register_user(user: UserCreate):
     return created
 
 
-@router.get("/users/", response_model=list[UserOut])
+@router.get("/", response_model=list[UserOut])
 def list_users_route(current_user=Depends(get_current_admin)):
     return list_users().users
 
 
-@router.get("/users/me", response_model=UserOut)
+@router.get("/me", response_model=UserOut)
 def get_my_profile(current_user=Depends(get_current_user)):
     return current_user
 
 
-@router.get("/users/{user_id}", response_model=UserOut)
+@router.get("/{user_id}", response_model=UserOut)
 def get_user(user_id: int, current_user=Depends(get_current_admin)):
     try:
         return get_user_by_id(user_id)

@@ -21,6 +21,7 @@ def get_current_user(request: Request):
     token = auth_header.split(" ")[1]
 
     try:
+        token = token.strip()
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email = payload.get("sub")
         if not email:

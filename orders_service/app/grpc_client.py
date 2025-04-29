@@ -17,6 +17,7 @@ order_channel = grpc.insecure_channel("db_service:50052")
 order_stub = orders_pb2_grpc.OrderServiceStub(order_channel)
 
 def create_order_grpc(order: OrderCreate, user_id: int):
+    # noinspection PyUnresolvedReferences
     request = orders_pb2.CreateOrderRequest(
         user_id=user_id,
         item_name=order.item_name,
@@ -26,11 +27,13 @@ def create_order_grpc(order: OrderCreate, user_id: int):
     return response.order
 
 def get_orders_for_user(user_id: int):
+    # noinspection PyUnresolvedReferences
     request = orders_pb2.UserIdRequest(user_id=user_id)
     response = order_stub.ListOrdersByUser(request)
     return list(response.orders)
 
 def get_all_orders_grpc():
+    # noinspection PyUnresolvedReferences
     request = orders_pb2.Empty()
     response = order_stub.ListAllOrders(request)
     return list(response.orders)

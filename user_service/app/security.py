@@ -3,7 +3,6 @@ import os
 from datetime import datetime, timedelta
 
 import grpc
-import requests
 import jwt
 from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status, Security
@@ -11,7 +10,7 @@ from fastapi.security import OAuth2PasswordBearer, HTTPBearer
 from passlib.context import CryptContext
 from app.grpc_client import get_user_by_email
 
-load_dotenv()
+load_dotenv(".env")
 
 SECRET_KEY = os.getenv('USER_SERVICE_JWT_SECRET', 'default_secret')
 ALGORITHM = "HS256"
@@ -33,6 +32,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 
 def decode_access_token(token: str):
+    token = token.strip()
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
